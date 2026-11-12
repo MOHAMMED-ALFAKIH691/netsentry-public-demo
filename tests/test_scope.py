@@ -10,6 +10,16 @@ class ScopeTests(unittest.TestCase):
         with self.assertRaises(ScanError):
             validate_ip_target("8.8.8.8")
 
+    def test_non_rfc1918_special_ranges_blocked(self):
+        for address in ("169.254.1.1", "0.1.2.3", "192.0.2.1", "198.18.0.1"):
+            with self.subTest(address=address):
+                with self.assertRaises(ScanError):
+                    validate_ip_target(address)
+
+    def test_link_local_network_blocked(self):
+        with self.assertRaises(ScanError):
+            validate_network("169.254.0.0/24")
+
     def test_large_network_blocked(self):
         with self.assertRaises(ScanError):
             validate_network("192.168.0.0/16")
