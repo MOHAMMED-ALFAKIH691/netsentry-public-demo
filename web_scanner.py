@@ -16,6 +16,11 @@ import requests
 
 NVD_URL = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 COMMON_PORTS = "21,22,23,25,53,80,110,139,143,443,445,3389,3306,5432,8080,8443"
+ALLOWED_IPV4_NETWORKS = tuple(
+    ipaddress.ip_network(value)
+    for value in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8")
+)
+
 RISKY_PORTS = {
     21: ("FTP", "HIGH", "FTP may expose credentials if encryption is not configured."),
     22: ("SSH", "MEDIUM", "SSH should use strong keys, restricted access, and rate limiting."),
@@ -36,8 +41,8 @@ def validate_ip_target(value: str) -> str:
         raise ScanError("Enter one valid IPv4 address, not a hostname or URL.") from exc
     if addr.version != 4:
         raise ScanError("Only IPv4 targets are supported in this version.")
-    if not (addr.is_private or addr.is_loopback):
-        raise ScanError("Target blocked: only localhost or private IPv4 lab addresses are allowed.")
+    if not any(addr in network for network in ALLOWED_IPV4_NETWORKS):
+        raise ScanError("Target blocked: only RFC1918 private IPv4 or localhost addresses are allowed.")
     return str(addr)
 
 
@@ -48,8 +53,8 @@ def validate_network(value: str) -> str:
         raise ScanError("Enter a valid IPv4 network in CIDR format, such as 192.168.56.0/24.") from exc
     if net.version != 4:
         raise ScanError("Only IPv4 networks are supported in this version.")
-    if not (net.is_private or net.is_loopback):
-        raise ScanError("Network blocked: host discovery is limited to private or loopback networks.")
+    if not any(net.subnet_of(allowed) for allowed in ALLOWED_IPV4_NETWORKS):
+        raise ScanError("Network blocked: discovery is limited to RFC1918 private IPv4 or loopback networks.")
     if net.num_addresses > 256:
         raise ScanError("Network too large. The maximum discovery range is 256 addresses (/24).")
     return str(net)
