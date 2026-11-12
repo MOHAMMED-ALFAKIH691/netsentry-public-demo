@@ -3,12 +3,22 @@ import requests
 import socket
 import ipaddress
 
+ALLOWED_IPV4_NETWORKS = tuple(
+    ipaddress.ip_network(value)
+    for value in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8")
+)
+
 
 def _allowed_scope(value: str, is_network: bool = False) -> bool:
     """Limit live scanning to localhost/private IPv4 lab ranges."""
     try:
         parsed = ipaddress.ip_network(value.strip(), strict=False) if is_network else ipaddress.ip_address(value.strip())
-        if parsed.version != 4 or not (parsed.is_private or parsed.is_loopback):
+        if parsed.version != 4:
+            return False
+        if is_network:
+            if not any(parsed.subnet_of(allowed) for allowed in ALLOWED_IPV4_NETWORKS):
+                return False
+        elif not any(parsed in allowed for allowed in ALLOWED_IPV4_NETWORKS):
             return False
         if is_network and parsed.num_addresses > 256:
             return False
