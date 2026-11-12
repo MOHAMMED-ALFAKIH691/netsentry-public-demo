@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Educational network security assessment dashboard for authorized private labs.">
+  <title>Network Penetration Testing Tool</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-demo-only="{{ 'true' if demo_only else 'false' }}">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">N</div><div><strong>NETSENTRY</strong><small>SECURITY ASSESSMENT</small></div></div>
+      <div class="nav-label">WORKSPACE</div>
+      <a class="nav-item active" href="#dashboard"><span>▦</span> Dashboard</a>
+      <a class="nav-item" href="#discovery"><span>⌕</span> Host Discovery</a>
+      <a class="nav-item" href="#assessment"><span>◈</span> Assessment</a>
+      <a class="nav-item" href="#reports"><span>▤</span> Reports</a>
+      <div class="sidebar-bottom"><div class="status-dot"></div><div><b>Lab-safe mode</b><small>Private IPv4 targets only</small></div></div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+      <header class="topbar"><div><div class="eyebrow">NETWORK SECURITY / OVERVIEW</div><h1>Assessment Dashboard</h1><p class="muted">Discover hosts, inspect exposed services, and review security posture.</p></div><div class="top-badge"><span class="pulse"></span> {% if demo_only %}PUBLIC DEMO MODE{% else %}LOCAL LAB MODE{% endif %}</div></header>
+
+      {% if demo_only %}
+      <section class="notice"><strong>Public demonstration mode.</strong> Live discovery and real network scans are disabled on this hosted instance. Use <em>Load Sample Demo</em> to explore synthetic results; no target devices are contacted.</section>
+      {% else %}
+      <section class="notice"><strong>Authorized use only.</strong> Live scans are limited to localhost and private IPv4 lab ranges (maximum /24 for discovery). No exploitation, password guessing, or attack traffic is performed. CVE keyword matches require manual verification.</section>
+      {% endif %}
+
+      <section class="grid metrics" id="assessment">
+        <article class="metric-card"><div class="metric-label">TARGET</div><div class="metric-value" id="metric-target">—</div><div class="metric-foot">Current assessment</div></article>
+        <article class="metric-card"><div class="metric-label">OPEN PORTS</div><div class="metric-value" id="metric-ports">—</div><div class="metric-foot">Observed in selected scan</div></article>
+        <article class="metric-card"><div class="metric-label">RISK SCORE</div><div class="metric-value"><span id="metric-score">—</span><small class="score-max"> / 10</small></div><div class="metric-foot" id="metric-level">Awaiting assessment</div></article>
+        <article class="metric-card"><div class="metric-label">CVE MATCHES</div><div class="metric-value" id="metric-cves">—</div><div class="metric-foot">Potential keyword matches</div></article>
+      </section>
+
+      <section class="panel" id="discovery">
+        <div class="panel-heading"><div><div class="eyebrow">01 / DISCOVERY</div><h2>Host Discovery</h2><p class="muted">Find active devices on your authorized private lab network.</p></div><span class="tag">NMAP · PING SCAN</span></div>
+        <div class="controls"><label class="field grow"><span>Private network (CIDR)</span><input id="network" value="192.168.56.0/24" placeholder="192.168.56.0/24"></label><button id="discover-btn" class="btn btn-secondary" {% if demo_only %}disabled{% endif %}>Discover Hosts</button></div>
+        <div id="discovery-result" class="result-placeholder">No discovery results yet.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><div class="eyebrow">02 / SECURITY ASSESSMENT</div><h2>Scan a Lab Target</h2><p class="muted">Run a fast port scan with lightweight service/version detection.</p></div><span class="tag">FAST SCAN · SERVICE DETECTION</span></div>
+        <div class="controls"><label class="field grow"><span>Target IPv4 address</span><input id="target" value="127.0.0.1" placeholder="192.168.56.101"></label><button id="scan-btn" class="btn btn-primary" {% if demo_only %}disabled{% endif %}>Run Assessment <span>→</span></button></div>
+        <label class="checkline"><input id="authorized" type="checkbox"> <span>I own this device/network or have explicit permission to assess it.</span></label>
+        <label class="checkline"><input id="include-cve" type="checkbox" checked> <span>Look up potential CVE matches through the NVD public database (Internet required).</span></label>
+        <div class="button-row"><button id="demo-btn" class="btn btn-ghost">Load Sample Demo</button><span id="scan-status" class="muted status-text">Ready</span></div>
+      </section>
+
+      <section class="grid two-col">
+        <article class="panel"><div class="panel-heading compact"><div><div class="eyebrow">03 / EXPOSURE REVIEW</div><h2>Open Ports & Services</h2></div><span class="tag">TCP</span></div><div id="ports-result" class="result-placeholder">Run an assessment to view detected services.</div></article>
+        <article class="panel"><div class="panel-heading compact"><div><div class="eyebrow">04 / RISK ANALYSIS</div><h2>Risk Factors</h2></div><span class="tag">HEURISTIC SCORE</span></div><div id="risk-result" class="result-placeholder">Risk factors will appear here.</div></article>
+      </section>
+
+      <section class="grid two-col">
+        <article class="panel"><div class="panel-heading compact"><div><div class="eyebrow">05 / VULNERABILITY AWARENESS</div><h2>CVE Lookup</h2></div><span class="tag">NVD API 2.0</span></div><div id="cve-result" class="result-placeholder">No CVE lookup performed yet.</div></article>
+        <article class="panel"><div class="panel-heading compact"><div><div class="eyebrow">06 / ATTACK SIMULATION</div><h2>Authentication Exposure</h2></div><span class="tag tag-safe">SIMULATION ONLY</span></div><div id="simulation-result" class="result-placeholder">No login attempts or password guessing are performed.</div></article>
+      </section>
+
+      <section class="panel" id="reports"><div class="panel-heading"><div><div class="eyebrow">07 / REPORTING</div><h2>Security Recommendations & Report</h2><p class="muted">Download a structured JSON report from the latest assessment.</p></div><button id="download-btn" class="btn btn-secondary" disabled>Download Report ↓</button></div><div id="recommendations" class="result-placeholder">Recommendations will appear after an assessment.</div><div class="report-note">The risk score is a simple exposure heuristic for this educational project. It is not a formal penetration-test rating or a substitute for manual validation.</div></section>
+
+      <footer>Network Penetration Testing Tool · Educational project · {% if demo_only %}Public synthetic demo · Live scanning disabled{% else %}Authorized private lab use{% endif %}</footer>
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
