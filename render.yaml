@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: netsentry-public-demo
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT web_app:app
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DEMO_ONLY
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
